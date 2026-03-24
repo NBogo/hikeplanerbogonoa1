@@ -14,21 +14,13 @@ RAW_CONTAINER_PREFIX = "hikeplanner-raw-data"
 
 
 def _latest_container(blob_service_client: BlobServiceClient) -> str:
-    prefix = f"{RAW_CONTAINER_PREFIX}-"
-    suffix = -1
-    latest = None
-    for container in blob_service_client.list_containers():
-        name = container["name"]
-        if name.startswith(prefix):
-            rest = name[len(prefix) :]
-            if rest.isdigit():
-                current = int(rest)
-                if current > suffix:
-                    suffix = current
-                    latest = name
-    if not latest:
-        raise SystemExit("No raw data containers found in storage account.")
-    return latest
+    """Returns the default raw data container name."""
+    # Check if the container actually exists to prevent a crash later
+    container_client = blob_service_client.get_container_client(RAW_CONTAINER_PREFIX)
+    if not container_client.exists():
+        raise SystemExit(f"Error: The container '{RAW_CONTAINER_PREFIX}' does not exist in your Azure account.")
+    
+    return RAW_CONTAINER_PREFIX
 
 
 def download_raw_data() -> None:
